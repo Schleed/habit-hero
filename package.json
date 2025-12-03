@@ -40,7 +40,7 @@
   "build": {
     "appId": "com.yourname.habithero",
     "productName": "Habit Hero",
-
+    "publish": null,
     "directories": {
       "output": "release"
     },
