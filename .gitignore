@@ -1,0 +1,53 @@
+# -------------------------
+# Node / npm
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -------------------------
+# Vite build output
+# -------------------------
+dist/
+
+# -------------------------
+# Electron build output
+# -------------------------
+release/
+win-unpacked/
+mac/
+linux-unpacked/
+*.asar
+
+# -------------------------
+# Installers (VERY LARGE)
+# -------------------------
+*.exe
+*.dmg
+*.zip
+*.AppImage
+*.pkg
+*.deb
+*.snap
+
+# -------------------------
+# Mac & Windows OS Junk
+# -------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------------
+# Environment files
+# -------------------------
+.env
+.env.local
+.env.*.local
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+logs/
