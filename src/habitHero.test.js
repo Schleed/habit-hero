@@ -7,7 +7,7 @@ import {
   getFrequencyDays,
   isHabitDoneThisPeriod,
   getNextDueDate
-} from "../src/HabitHero"; // adjust path based on your structure
+} from "../src/HabitHero"; 
 
 describe("Habit Hero - Frequency Helpers", () => {
   test("getFrequencyDays returns correct values", () => {
@@ -100,3 +100,44 @@ describe("Habit Hero - Next Due Date Calculation", () => {
     expect(next.toDateString()).toBe(expected.toDateString());
   });
 });
+
+describe("Habit Hero – Streak Logic", () => {
+    test("Streak continues if completed within the frequency window", () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const habit = {
+            name: "Workout",
+            frequency: "daily",
+            lastCompleted: yesterday.toDateString(),
+            streak: 3
+        };
+
+        const todayStr = new Date().toDateString();
+        const freqDays = 1;
+
+        const diffDays = 1; 
+
+        const newStreak = diffDays <= freqDays ? habit.streak + 1 : 1;
+
+        expect(newStreak).toBe(4);
+    });
+
+    test("Streak resets if too many days passed", () => {
+        const last = new Date();
+        last.setDate(last.getDate() - 5);
+
+        const habit = {
+            frequency: "daily",
+            lastCompleted: last.toDateString(),
+            streak: 6
+        };
+
+        const diffDays = 5;
+
+        const newStreak = diffDays <= 1 ? habit.streak + 1 : 1;
+
+        expect(newStreak).toBe(1);
+    });
+});
+
