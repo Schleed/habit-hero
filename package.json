@@ -1,6 +1,7 @@
 {
   "name": "habit-hero",
   "version": "1.0.0",
+  "type": "module",
   "description": "Gamified productivity app that rewards habits, tasks, and goals.",
   "author": "Group 5 - CP317",
   "private": true,
@@ -15,8 +16,6 @@
     "dist": "vite build && electron-builder"
   },
   "dependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
     "firebase": "^12.6.0",
     "framer-motion": "^12.23.25",
     "lucide": "^0.555.0",
@@ -26,12 +25,20 @@
     "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
     "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^5.1.1",
+    "babel-jest": "^30.2.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^28.2.0",
     "electron-builder": "^26.0.12",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
     "tailwindcss": "^4.0.0",
     "vite": "^7.2.6",
     "wait-on": "^9.0.3"

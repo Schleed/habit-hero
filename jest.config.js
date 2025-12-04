@@ -1,8 +1,17 @@
-// jest.config.js
 export default {
-  testEnvironment: "jsdom",
-  moduleFileExtensions: ["js", "jsx"],
+  testEnvironment: "jest-environment-jsdom",
+
   transform: {
-    "^.+\\.(js|jsx)$": "babel-jest",
+    "^.+\\.(js|jsx)$": ["babel-jest", { configFile: "./babel.config.js" }],
   },
+
+  moduleFileExtensions: ["js", "jsx"],
+
+  transformIgnorePatterns: [
+    "/node_modules/(?!(lucide-react|framer-motion)/)",
+  ],
+
+  setupFilesAfterEnv: ["@testing-library/jest-dom"],
 };
+
+

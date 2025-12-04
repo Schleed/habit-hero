@@ -540,6 +540,31 @@ const Auth = () => {
   );
 };
 
+// XP → Level formula
+const calculateLevel = (xp) => Math.floor(Math.sqrt(xp / 100)) + 1;
+
+// XP → Progress % toward next level
+const calculateProgress = (xp = 0) => {
+  const level = calculateLevel(xp);
+  const currentLevelXp = 100 * Math.pow(level - 1, 2);
+  const nextLevelXp = 100 * Math.pow(level, 2);
+  return Math.min(
+    100,
+    Math.max(0, ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100)
+  );
+};
+
+// Task completion toggle logic (testable without Firestore)
+const toggleTaskLogic = (task) => {
+  const completed = !task.completed;
+
+  return {
+    completed,
+    xp: completed ? 50 : -50,
+    coins: completed ? 20 : -20,
+  };
+};
+
 // --- MAIN APPLICATION COMPONENT ---
 export default function HabitHero() {
   const [user, setUser] = useState(null);
@@ -1781,4 +1806,15 @@ const HabitsView = ({
     </div>
   );
 };
+
+export {
+  getFrequencyDays,
+  isHabitDoneThisPeriod,
+  getNextDueDate,
+  calculateLevel,
+  calculateProgress,
+  toggleTaskLogic,
+};
+
+
 
