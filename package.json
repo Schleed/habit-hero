@@ -6,6 +6,7 @@
   "private": true,
   "main": "electron/main.js",
   "scripts": {
+    "test": "jest",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -14,6 +15,8 @@
     "dist": "vite build && electron-builder"
   },
   "dependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
     "firebase": "^12.6.0",
     "framer-motion": "^12.23.25",
     "lucide": "^0.555.0",
@@ -68,11 +71,9 @@
       "category": "public.app-category.productivity",
       "icon": "icon.icns",
       "hardenedRuntime": false,
-    "dmg": {
-      "artifactName": "Habit Hero-${version}.dmg"
+      "dmg": {
+        "artifactName": "Habit Hero-${version}.dmg"
+      }
     }
   }
-
-  }
 }
-
