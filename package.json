@@ -1,6 +1,8 @@
 {
   "name": "habit-hero",
   "version": "1.0.0",
+  "description": "Gamified productivity app that rewards habits, tasks, and goals.",
+  "author": "Group 5 - CP317",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -66,10 +68,11 @@
       "category": "public.app-category.productivity",
       "icon": "icon.icns",
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
-    },
     "dmg": {
       "artifactName": "Habit Hero-${version}.dmg"
     }
   }
+
+  }
 }
+
