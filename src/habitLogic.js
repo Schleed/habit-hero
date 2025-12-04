@@ -76,3 +76,96 @@ export const toggleTaskLogic = (task) => {
     coins: completed ? 20 : -20,
   };
 };
+
+
+// Simple in-memory mock database
+let users = {};
+let tasks = {};
+let habits = {};
+
+let nextTaskId = 1;
+let nextHabitId = 1;
+
+// ---------------- AUTH ----------------
+
+export const registerUser = (email, password) => {
+  const valid = /\S+@\S+\.\S+/.test(email);
+  if (!valid) return { success: false };
+
+  users[email] = { email, password };
+  return { success: true };
+};
+
+export const loginUser = (email, password) => {
+  if (!users[email] || users[email].password !== password) {
+    return { success: false };
+  }
+  return { success: true, token: "fake-token-" + email };
+};
+
+// ---------------- TASKS ----------------
+
+export const createTask = ({ title, due }) => {
+  if (!title) throw new Error("Task title required");
+
+  const task = {
+    id: nextTaskId++,
+    title,
+    due,
+    completed: false,
+  };
+
+  tasks[task.id] = task;
+  return task;
+};
+
+export const updateTask = (id, updates) => {
+  if (!tasks[id]) throw new Error("Task not found");
+
+  tasks[id] = { ...tasks[id], ...updates };
+  return tasks[id];
+};
+
+export const deleteTask = (id) => {
+  delete tasks[id];
+};
+
+export const getTaskById = (id) => tasks[id];
+
+// ---------------- HABITS ----------------
+
+export const createHabit = (name, frequency) => {
+  const validFrequencies = ["daily", "weekly", "biweekly", "monthly"];
+  if (!validFrequencies.includes(frequency))
+    throw new Error("Invalid frequency");
+
+  const habit = {
+    id: nextHabitId++,
+    name,
+    frequency,
+    streak: 0,
+  };
+
+  habits[habit.id] = habit;
+  return habit;
+};
+
+export const updateHabit = (id, updates) => {
+  if (!habits[id]) throw new Error("Habit not found");
+
+  habits[id] = { ...habits[id], ...updates };
+  return habits[id];
+};
+
+export const deleteHabit = (id) => {
+  delete habits[id];
+};
+
+export const getHabitById = (id) => habits[id];
+
+// ---------------- ANALYTICS ----------------
+
+export const getWeeklyTaskStats = () => {
+  const completed = Object.values(tasks).filter(t => t.completed).length;
+  return { completed };
+};
