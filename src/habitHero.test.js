@@ -141,3 +141,40 @@ describe("Habit Hero – Streak Logic", () => {
     });
 });
 
+import { calculateLevel } from "../src/HabitHero";
+// Level formula handles large XP correctly
+test("Level scales correctly for large XP (10,000 XP ? Level 11)", () => {
+    expect(calculateLevel(10000)).toBe(11);
+});
+
+import { calculateProgress } from "../src/HabitHero";
+//Progress bar returns number between 0–100
+test("Progress bar always returns a percentage between 0 and 100", () => {
+    const progress = calculateProgress(350);
+    expect(progress).toBeGreaterThanOrEqual(0);
+    expect(progress).toBeLessThanOrEqual(100);
+});
+
+import { toggleTask } from "../src/HabitHero";
+
+describe("Task Logic – Completion Toggle", () => {
+    test("Completing a task awards XP and coins", async () => {
+        const task = { id: "t1", completed: false };
+        const updateDoc = jest.fn();
+        const addRewards = jest.fn();
+
+        await toggleTask(task, updateDoc, addRewards);
+
+        expect(addRewards).toHaveBeenCalledWith(50, 20);
+    });
+
+    test("Un-completing a task removes XP and coins", async () => {
+        const task = { id: "t1", completed: true };
+        const updateDoc = jest.fn();
+        const addRewards = jest.fn();
+
+        await toggleTask(task, updateDoc, addRewards);
+
+        expect(addRewards).toHaveBeenCalledWith(-50, -20);
+    });
+});
