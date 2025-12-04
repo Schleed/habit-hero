@@ -1,5 +1,10 @@
 // src/HabitHero.jsx
 
+import {
+  getFrequencyDays,
+  isHabitDoneThisPeriod,
+  getNextDueDate,
+} from "./HabitLogic";
 import React, { useState, useEffect } from 'react';
 import toast from "react-hot-toast";
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -203,49 +208,6 @@ const toJsDate = (value) => {
   if (value.toDate) return value.toDate();
   return new Date(value);
 };
-
-const getFrequencyDays = (frequency) => {
-  switch (frequency) {
-    case 'weekly':
-      return 7;
-    case 'biweekly':
-      return 14;
-    case 'monthly':
-      return 30;
-    default:
-      return 1; // daily
-  }
-};
-
-const isHabitDoneThisPeriod = (habit) => {
-  const freq = habit.frequency || 'daily';
-  const last = habit.lastCompleted ? new Date(habit.lastCompleted) : null;
-  if (!last) return false;
-
-  const now = new Date();
-  const diffDays = (now - last) / (1000 * 60 * 60 * 24);
-
-  if (freq === 'daily') {
-    return now.toDateString() === last.toDateString();
-  }
-
-  const freqDays = getFrequencyDays(freq);
-  return diffDays >= 0 && diffDays < freqDays;
-};
-
-const getNextDueDate = (habit) => {
-  const freq = habit.frequency || 'daily';
-  const freqDays = getFrequencyDays(freq);
-
-  const base = habit.lastCompleted
-    ? new Date(habit.lastCompleted)
-    : toJsDate(habit.createdAt) || new Date();
-
-  const next = new Date(base);
-  next.setDate(next.getDate() + freqDays);
-  return next;
-};
-
 
 // --- COMPONENTS ---
 
