@@ -1,6 +1,7 @@
 // src/HabitHero.jsx
 
 import React, { useState, useEffect } from 'react';
+import toast from "react-hot-toast";
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
@@ -192,6 +193,59 @@ const ITEMS = {
     color: '#fbbf24',
   },
 };
+
+
+// --- HABIT FREQUENCY HELPERS ---
+
+const toJsDate = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') return new Date(value);
+  if (value.toDate) return value.toDate();
+  return new Date(value);
+};
+
+const getFrequencyDays = (frequency) => {
+  switch (frequency) {
+    case 'weekly':
+      return 7;
+    case 'biweekly':
+      return 14;
+    case 'monthly':
+      return 30;
+    default:
+      return 1; // daily
+  }
+};
+
+const isHabitDoneThisPeriod = (habit) => {
+  const freq = habit.frequency || 'daily';
+  const last = habit.lastCompleted ? new Date(habit.lastCompleted) : null;
+  if (!last) return false;
+
+  const now = new Date();
+  const diffDays = (now - last) / (1000 * 60 * 60 * 24);
+
+  if (freq === 'daily') {
+    return now.toDateString() === last.toDateString();
+  }
+
+  const freqDays = getFrequencyDays(freq);
+  return diffDays >= 0 && diffDays < freqDays;
+};
+
+const getNextDueDate = (habit) => {
+  const freq = habit.frequency || 'daily';
+  const freqDays = getFrequencyDays(freq);
+
+  const base = habit.lastCompleted
+    ? new Date(habit.lastCompleted)
+    : toJsDate(habit.createdAt) || new Date();
+
+  const next = new Date(base);
+  next.setDate(next.getDate() + freqDays);
+  return next;
+};
+
 
 // --- COMPONENTS ---
 
@@ -493,6 +547,7 @@ export default function HabitHero() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [tasks, setTasks] = useState([]);
   const [habits, setHabits] = useState([]);
+  const [sentReminders, setSentReminders] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState({
     xp: 0,
@@ -593,6 +648,60 @@ export default function HabitHero() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // In-app reminder engine: 2 days before / 1 day before / due today
+  useEffect(() => {
+    const runReminderChecks = () => {
+      setSentReminders((prev) => {
+        const updated = { ...prev };
+        const now = new Date();
+
+        habits.forEach((habit) => {
+          const nextDue = getNextDueDate(habit);
+          if (!nextDue) return;
+
+          const diffMs = nextDue - now;
+          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+          const baseKey = `${habit.id}_${nextDue.toDateString()}`;
+
+          if (diffDays === 2) {
+            const key = `${baseKey}_2`;
+            if (!updated[key]) {
+              toast(`Reminder: "${habit.name}" is due in 2 days.`);
+              updated[key] = true;
+            }
+          }
+
+          if (diffDays === 1) {
+            const key = `${baseKey}_1`;
+            if (!updated[key]) {
+              toast(`Reminder: "${habit.name}" is due tomorrow!`, {
+                icon: '⚠️',
+              });
+              updated[key] = true;
+            }
+          }
+
+          if (diffDays === 0) {
+            const key = `${baseKey}_0`;
+            if (!updated[key]) {
+              toast.error(`"${habit.name}" is due today!`);
+              updated[key] = true;
+            }
+          }
+        });
+
+        return updated;
+      });
+    };
+
+    runReminderChecks();
+    const id = setInterval(runReminderChecks, 60 * 1000);
+    return () => clearInterval(id);
+  }, [habits]);
+
+
+
   // Actions
   const addRewards = async (xpAmount, coinAmount) => {
     if (!user) return;
@@ -646,11 +755,13 @@ export default function HabitHero() {
     await deleteDoc(doc(db, 'users', uid, 'tasks', id));
   };
 
-  const addHabit = async (name) => {
+
+  const addHabit = async (name, frequency = 'daily') => {
     if (!user || !name.trim()) return;
     const uid = user.uid;
     await addDoc(collection(db, 'users', uid, 'habits'), {
       name,
+      frequency, // 'daily' | 'weekly' | 'biweekly' | 'monthly'
       streak: 0,
       lastCompleted: null,
       createdAt: serverTimestamp(),
@@ -660,19 +771,40 @@ export default function HabitHero() {
   const checkInHabit = async (habit) => {
     if (!user) return;
     const uid = user.uid;
-    const today = new Date().toDateString();
-    if (habit.lastCompleted === today) return;
 
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toDateString();
+    const today = new Date();
+    const todayStr = today.toDateString();
+
+    // Don't double-count on the same day
+    if (habit.lastCompleted === todayStr) return;
+
+    const freq = habit.frequency || 'daily';
+    const freqDays = getFrequencyDays(freq);
 
     let newStreak = habit.streak || 0;
-    if (habit.lastCompleted === yesterdayStr) newStreak += 1;
-    else newStreak = 1;
+
+    if (habit.lastCompleted) {
+      const last = new Date(habit.lastCompleted);
+      const diffDays = Math.round(
+        (today - last) / (1000 * 60 * 60 * 24),
+      );
+
+      // If we've completed within the previous period, streak continues
+      if (diffDays > 0 && diffDays <= freqDays) {
+        newStreak += 1;
+      } else {
+        newStreak = 1;
+      }
+    } else {
+      newStreak = 1;
+    }
 
     const habitRef = doc(db, 'users', uid, 'habits', habit.id);
-    await updateDoc(habitRef, { streak: newStreak, lastCompleted: today });
+    await updateDoc(habitRef, {
+      streak: newStreak,
+      lastCompleted: todayStr,
+      frequency: freq,
+    });
 
     let coinBonus = 0;
     let xpBonus = 0;
@@ -680,7 +812,7 @@ export default function HabitHero() {
     if (newStreak % 7 === 0) {
       coinBonus = 100;
       xpBonus = 100;
-      alert(`🔥 7-DAY STREAK! +${coinBonus} Gold!`);
+      toast.success(`🔥 7-PERIOD STREAK! +${coinBonus} Gold!`);
     } else if (newStreak % 3 === 0) {
       coinBonus = 50;
       xpBonus = 50;
@@ -1539,6 +1671,7 @@ const TasksView = ({
   );
 };
 
+
 const HabitsView = ({
   habits,
   addHabit,
@@ -1546,35 +1679,53 @@ const HabitsView = ({
   deleteHabit,
 }) => {
   const [name, setName] = useState('');
+  const [frequency, setFrequency] = useState('weekly'); // default weekly
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-    addHabit(name);
+    addHabit(name, frequency);
     setName('');
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Habits</h2>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+        <CheckCircle className="text-green-500" size={20} />
+        Habits
+      </h2>
       <form
         onSubmit={handleSubmit}
-        className="flex gap-2 bg-white p-4 rounded-xl shadow-sm border"
+        className="flex flex-col md:flex-row gap-2 bg-white p-4 rounded-xl shadow-sm border"
       >
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 border p-2 rounded"
-          placeholder="New Habit"
+          className="flex-1 border p-2 rounded text-sm"
+          placeholder="New Habit (e.g., Run 5k)"
         />
-        <button className="bg-indigo-600 text-white px-4 rounded font-bold">
-          <Plus />
+        <select
+          value={frequency}
+          onChange={(e) => setFrequency(e.target.value)}
+          className="border p-2 rounded text-sm"
+        >
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Bi-weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+        <button
+          type="submit"
+          className="bg-indigo-600 text-white px-4 rounded font-bold flex items-center justify-center gap-1"
+        >
+          <Plus size={16} />
+          Add
         </button>
       </form>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {habits.map((h) => {
-          const isDone =
-            h.lastCompleted === new Date().toDateString();
+          const isDone = isHabitDoneThisPeriod(h);
+
           return (
             <div
               key={h.id}
@@ -1582,7 +1733,7 @@ const HabitsView = ({
             >
               <button
                 onClick={() => deleteHabit(h.id)}
-                className="absolute top-2 right-2 text-slate-300 opacity-0 group-hover:opacity-100"
+                className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
               >
                 <Trash2 size={16} />
               </button>
@@ -1591,16 +1742,23 @@ const HabitsView = ({
                 <div className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                   <Clock size={10} />
                   {h.lastCompleted
-                    ? `Last: ${new Date(
-                        h.lastCompleted,
-                      ).toLocaleDateString()}`
+                    ? `Last: ${new Date(h.lastCompleted).toLocaleDateString()}`
                     : 'Not started yet'}
                 </div>
+                <div className="text-xs text-slate-400 mt-1">
+                  Frequency:{' '}
+                  {{
+                    daily: 'Daily',
+                    weekly: 'Weekly',
+                    biweekly: 'Every 2 weeks',
+                    monthly: 'Monthly',
+                  }[h.frequency || 'daily']}
+                </div>
               </div>
-              <div className="flex justify-between items-end">
+              <div className="flex justify-between items-end mt-2">
                 <div>
                   <div className="text-3xl font-black">
-                    {h.streak}
+                    {h.streak || 0}
                   </div>
                   <div className="text-xs text-slate-400">Streak</div>
                 </div>
@@ -1623,3 +1781,4 @@ const HabitsView = ({
     </div>
   );
 };
+

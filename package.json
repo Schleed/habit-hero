@@ -2,29 +2,24 @@
   "name": "habit-hero",
   "version": "1.0.0",
   "private": true,
-
   "main": "electron/main.js",
-
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-
     "electron:dev": "concurrently \"npm run dev\" \"npm run electron:start\"",
     "electron:start": "wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
-
     "dist": "vite build && electron-builder"
   },
-
   "dependencies": {
     "firebase": "^12.6.0",
     "framer-motion": "^12.23.25",
     "lucide": "^0.555.0",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.6.0"
   },
-
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "@vitejs/plugin-react": "^5.1.1",
@@ -36,7 +31,6 @@
     "vite": "^7.2.6",
     "wait-on": "^9.0.3"
   },
-
   "build": {
     "appId": "com.yourname.habithero",
     "productName": "Habit Hero",
@@ -44,14 +38,11 @@
     "directories": {
       "output": "release"
     },
-
     "asar": true,
     "compression": "maximum",
-
     "electronLanguages": [
       "en-US"
     ],
-
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -61,14 +52,12 @@
       "!node_modules/**/*.map",
       "!**/*.md"
     ],
-
     "win": {
       "target": [
         "nsis"
       ],
       "icon": "icon.ico"
     },
-
     "mac": {
       "target": [
         "dmg",
@@ -79,7 +68,6 @@
       "hardenedRuntime": false,
       "gatekeeperAssess": false
     },
-
     "dmg": {
       "artifactName": "Habit Hero-${version}.dmg"
     }
