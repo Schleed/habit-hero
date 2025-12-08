@@ -2,7 +2,7 @@
 
 ![Habit Hero Banner](./picture.png)
 
-> **Gamify your productivity.** 🎮
+## **Gamify your productivity.** 🎮
 
 ## 📖 Overview
 
